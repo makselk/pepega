@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <string>
+#include <tuple>
 
 /******************************************************************************/
 class IpegaButton {
@@ -40,12 +41,34 @@ class IpegaJoy {
 class Ipega {
  public:
   explicit Ipega(const std::string& path = "/dev/input/js0");
+
+ public:
   void spin();
   void printRaw();
   void printState();
 
+ public:
+  bool getStartButton();
+  bool getSelectButton();
+  bool getHomeButton();
+  bool getDpadLeft();
+  bool getDpadRight();
+  bool getDpadUp();
+  bool getDpadDown();
+  bool getAButton();
+  bool getBButton();
+  bool getXButton();
+  bool getYButton();
+  bool getBumperLeft();
+  bool getBumperRight();
+  bool getRightStickButton();
+  bool getLeftStickButton();
+  std::tuple<bool, int> getTriggerLeft();
+  std::tuple<bool, int> getTriggerRight();
+  std::tuple<int, int> getLeftStick();
+  std::tuple<int, int> getRightStick();
+
  private:
-  void parseData();
   void parseData(uint8_t* data, int bytes);
   void decodeData(uint8_t* data);
 

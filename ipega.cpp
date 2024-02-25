@@ -69,6 +69,7 @@ Ipega::Ipega(const std::string& path_) {
 void Ipega::spin() {
   bytes_read = read(file_descriptor, buffer, sizeof(buffer));
   parseData(buffer, bytes_read);
+  // printRaw();
 }
 /******************************************************************************/
 void Ipega::printRaw() {
@@ -114,22 +115,50 @@ void Ipega::printState() {
   std::cout << "right_stick_button: " << rsb.state << std::endl;
   std::cout << "**********************************************" << std::endl;
 }
+bool Ipega::getStartButton() { return start_button.state; }
 /******************************************************************************/
-void Ipega::parseData() {
-  if (bytes_read == 16) {
-    char additional[8];
-    memcpy(additional, &buffer[8], 8);
-    for (int i = 0; i != bytes_read; ++i) {
-      std::cout << (int)buffer[i] << ";";
-    }
-    std::cout << std::endl;
-    for (int i = 0; i != 8; ++i) {
-      std::cout << (int)additional[i] << ";";
-    }
-    std::cout << std::endl;
-  }
-  char group = buffer[6];
-  std::cout << (int)group << std::endl;
+bool Ipega::getSelectButton() { return select_button.state; }
+/******************************************************************************/
+bool Ipega::getHomeButton() { return home_button.state; }
+/******************************************************************************/
+bool Ipega::getDpadLeft() { return dpad_left.state; }
+/******************************************************************************/
+bool Ipega::getDpadRight() { return dpad_right.state; }
+/******************************************************************************/
+bool Ipega::getDpadUp() { return dpad_up.state; }
+/******************************************************************************/
+bool Ipega::getDpadDown() { return dpad_down.state; }
+/******************************************************************************/
+bool Ipega::getAButton() { return A.state; }
+/******************************************************************************/
+bool Ipega::getBButton() { return B.state; }
+/******************************************************************************/
+bool Ipega::getXButton() { return X.state; }
+/******************************************************************************/
+bool Ipega::getYButton() { return Y.state; }
+/******************************************************************************/
+bool Ipega::getBumperLeft() { return bump_left.state; }
+/******************************************************************************/
+bool Ipega::getBumperRight() { return bump_right.state; }
+/******************************************************************************/
+bool Ipega::getRightStickButton() { return rsb.state; }
+/******************************************************************************/
+bool Ipega::getLeftStickButton() { return lsb.state; }
+/******************************************************************************/
+std::tuple<bool, int> Ipega::getTriggerLeft() {
+  return std::tuple<bool, int>(trig_left.state, trig_left.value);
+}
+/******************************************************************************/
+std::tuple<bool, int> Ipega::getTriggerRight() {
+  return std::tuple<bool, int>(trig_right.state, trig_right.value);
+}
+/******************************************************************************/
+std::tuple<int, int> Ipega::getLeftStick() {
+  return std::tuple<int, int>(joy_left.x_value, joy_left.y_value);
+}
+/******************************************************************************/
+std::tuple<int, int> Ipega::getRightStick() {
+  return std::tuple<int, int>(joy_right.x_value, joy_right.y_value);
 }
 /******************************************************************************/
 void Ipega::parseData(uint8_t* data, int bytes) {
@@ -147,9 +176,11 @@ void Ipega::parseData(uint8_t* data, int bytes) {
 /******************************************************************************/
 void Ipega::decodeData(uint8_t* data) {
   uint8_t type = data[Bytes::Type];
+
   if (DEBUG_INFO) {
     std::cout << "type: " << (int)type << std::endl;
   }
+
   if (type == Types::Single) {
     decodeSingleData(data);
   }
