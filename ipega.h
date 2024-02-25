@@ -8,7 +8,6 @@
 
 #include <atomic>
 #include <string>
-#include <thread>
 
 /******************************************************************************/
 class IpegaButton {
@@ -43,6 +42,7 @@ class Ipega {
   explicit Ipega(const std::string& path = "/dev/input/js0");
   void spin();
   void printRaw();
+  void printState();
 
  private:
   void parseData();
@@ -50,8 +50,8 @@ class Ipega {
   void decodeData(uint8_t* data);
 
   void decodeSingleData(uint8_t* data);
-
   void decodeLineData(uint8_t* data);
+
   void decodeDpadVertical(uint8_t* data);
   void decodeDpadHorizontal(uint8_t* data);
   void decodeJoyLeftVertical(uint8_t* data);
@@ -71,6 +71,7 @@ class Ipega {
   // func buttons
   IpegaButton start_button;
   IpegaButton select_button;
+  IpegaButton home_button;
   // dpad
   IpegaButton dpad_left;
   IpegaButton dpad_right;
