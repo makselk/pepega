@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <string>
+#include <thread>
 #include <tuple>
 
 /******************************************************************************/
@@ -41,13 +42,10 @@ class IpegaJoy {
 class Ipega {
  public:
   explicit Ipega(const std::string& path = "/dev/input/js0");
+  ~Ipega();
 
  public:
-  void spin();
-  void printRaw();
   void printState();
-
- public:
   bool getStartButton();
   bool getSelectButton();
   bool getHomeButton();
@@ -69,6 +67,10 @@ class Ipega {
   std::tuple<int, int> getRightStick();
 
  private:
+  void spin();
+  void spinOnce();
+  void printRaw();
+
   void parseData(uint8_t* data, int bytes);
   void decodeData(uint8_t* data);
 
@@ -85,7 +87,14 @@ class Ipega {
   void decodeTriggerRight(uint8_t* data);
 
  private:
+  std::thread worker;
+  std::atomic<bool> stopped;
+
   std::string path;
+
+  fd_set read_fds;  // read_file_descriptor_set
+  struct timeval timeout;
+  const long timeout_u = 100000;  // 100ms
   int file_descriptor;
   int bytes_read;
   uint8_t buffer[20];

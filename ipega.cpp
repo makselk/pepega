@@ -58,28 +58,23 @@ typedef enum {
 } DpadValues;
 /******************************************************************************/
 /******************************************************************************/
-Ipega::Ipega(const std::string& path_) {
+Ipega::Ipega(const std::string& path_) : stopped(false) {
   path = path_;
+
   file_descriptor = open(path.c_str(), O_RDONLY);
   if (file_descriptor < 0) {
     throw std::runtime_error("failed to open " + path);
   }
+
+  worker = std::thread(&Ipega::spin, this);
 }
 /******************************************************************************/
-void Ipega::spin() {
-  bytes_read = read(file_descriptor, buffer, sizeof(buffer));
-  parseData(buffer, bytes_read);
-  // printRaw();
-}
-/******************************************************************************/
-void Ipega::printRaw() {
-  if (bytes_read <= 0) {
-    return;
+Ipega::~Ipega() {
+  stopped = true;
+  if (worker.joinable()) {
+    worker.join();
   }
-  for (int i = 0; i != bytes_read; ++i) {
-    std::cout << buffer[i] << " : ";
-  }
-  std::cout << std::endl;
+  close(file_descriptor);
 }
 /******************************************************************************/
 void Ipega::printState() {
@@ -159,6 +154,40 @@ std::tuple<int, int> Ipega::getLeftStick() {
 /******************************************************************************/
 std::tuple<int, int> Ipega::getRightStick() {
   return std::tuple<int, int>(joy_right.x_value, joy_right.y_value);
+}
+/******************************************************************************/
+void Ipega::spin() {
+  while (!stopped) {
+    spinOnce();
+  }
+}
+/******************************************************************************/
+void Ipega::spinOnce() {
+  // reset timeout
+  FD_ZERO(&read_fds);
+  FD_SET(file_descriptor, &read_fds);
+  timeout.tv_usec = timeout_u;
+  // try read with timeout
+  int rv = select(file_descriptor + 1, &read_fds, NULL, NULL, &timeout);
+  if (rv == -1) {
+    perror("select");
+  } else if (rv == 0) {
+    return;
+  } else {
+    bytes_read = read(file_descriptor, buffer, sizeof(buffer));
+    parseData(buffer, bytes_read);
+    // printRaw();
+  }
+}
+/******************************************************************************/
+void Ipega::printRaw() {
+  if (bytes_read <= 0) {
+    return;
+  }
+  for (int i = 0; i != bytes_read; ++i) {
+    std::cout << buffer[i] << " : ";
+  }
+  std::cout << std::endl;
 }
 /******************************************************************************/
 void Ipega::parseData(uint8_t* data, int bytes) {
